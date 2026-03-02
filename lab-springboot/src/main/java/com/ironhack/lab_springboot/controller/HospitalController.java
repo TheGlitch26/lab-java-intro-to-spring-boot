@@ -18,8 +18,8 @@ import static java.util.stream.Collectors.toList;
 public class HospitalController {
     private HashMap<Integer, Doctor> doctors = new HashMap<>();
     private HashMap<Integer, Patient> patients = new HashMap<>();
-    private ArrayList<Doctor> doctorsList = new ArrayList<>(doctors.values());
-    private ArrayList<Patient> patientsList = new ArrayList<>(patients.values());
+    private ArrayList<Doctor> doctorsList;
+    private ArrayList<Patient> patientsList;
 
     public HospitalController(){
         doctors.put(356712, new Doctor(356712, "cardiology", "Alonso Flores", ON_CALL));
@@ -35,6 +35,9 @@ public class HospitalController {
         patients.put(3, new Patient("1954-06-11", 356712, "Julia Dusterdieck", 3));
         patients.put(4, new Patient("1931-11-10", 761527, "Steve McDuck", 4));
         patients.put(5, new Patient("1999-02-15", 172456, "Marian Garcia", 5));
+
+        doctorsList = new ArrayList<>(doctors.values());
+        patientsList = new ArrayList<>(patients.values());
     }
 
     @GetMapping("/doctors")
@@ -76,30 +79,37 @@ public class HospitalController {
 
     @GetMapping("/patients/by-department")
     public List<Patient> getPatientsByDepartment(@RequestParam String department) {
-        System.out.println("--- DEBUG START ---");
-        System.out.println("1. URL Param received: [" + department + "]");
 
-        // 1. Find Doctors
         List<Integer> doctorIds = new ArrayList<>();
         for (Doctor d : doctorsList) {
-            System.out.println("Checking Doctor: " + d.getName() + " | Dept: [" + d.getDepartment() + "]");
             if (d.getDepartment().trim().equalsIgnoreCase(department.trim())) {
                 doctorIds.add(d.getEmployee_id());
             }
         }
-        System.out.println("2. Doctor IDs found for this dept: " + doctorIds);
 
-        // 2. Find Patients
         List<Patient> result = new ArrayList<>();
         for (Patient p : patientsList) {
-            System.out.println("Checking Patient: " + p.getName() + " | AdmittedBy: " + p.getAdmitted_by());
             if (doctorIds.contains(p.getAdmitted_by())) {
                 result.add(p);
             }
         }
-        System.out.println("3. Final Result Size: " + result.size());
-        System.out.println("--- DEBUG END ---");
 
         return result;
     }
+
+    @GetMapping("/patients/by-status-off")
+    public List<Patient> getPatientsWithOffDoctors(){
+        ArrayList<Patient> result = new ArrayList<>();
+        for(Doctor d : doctorsList){
+            if(d.getStatus() == OFF){
+                for(Patient p : patientsList){
+                    if(p.getAdmitted_by() == d.getEmployee_id()){
+                        result.add(p);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
 }
